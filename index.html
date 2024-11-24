@@ -112,6 +112,7 @@
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
                                     {{ report.reason }} - {{ report.additionalInfo }}
+                                    <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
                                 </li>
                             </ul>
                         </li>
@@ -137,6 +138,7 @@
             el: '#app',
             data: {
                 user: null,
+                isAdmin: false,
                 showLoginForm: true,
                 loginEmail: '',
                 loginPassword: '',
@@ -157,8 +159,13 @@
                     auth.signInWithEmailAndPassword(this.loginEmail, this.loginPassword).then(userCredential => {
                         this.user = userCredential.user;
                         this.isGuest = false;
+                        this.checkAdmin();
                         this.fetchReports();
                     });
+                },
+                checkAdmin() {
+                    const adminEmail = "admin@admin.com"; // Admin email address
+                    this.isAdmin = this.user.email === adminEmail;
                 },
                 loginAnonymously() {
                     auth.signInAnonymously().then(() => {
@@ -220,6 +227,14 @@
                 },
                 searchReports() {
                     this.filteredReports = this.reports.filter(report => report.discordUsername.toLowerCase().includes(this.searchUsername.toLowerCase()));
+                    this.groupReports();
+                },
+                deleteReport(reportId) {
+                    database.ref('reports/' + reportId).remove().then(() => {
+                        this.fetchReports();
+                    }).catch(error => {
+                        console.error("Error deleting report: ", error);
+                    });
                 },
                 groupReports() {
                     this.groupedReports = {};
@@ -236,6 +251,7 @@
                     this.user = user;
                     if (user) {
                         this.isGuest = user.isAnonymous;
+                        this.checkAdmin();
                         this.fetchReports();
                     }
                 });
