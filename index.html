@@ -190,12 +190,18 @@
                         discordUsername: this.discordUsername,
                         reason: this.reportReason === 'Other' ? this.otherReason : this.reportReason,
                         additionalInfo: this.additionalInfo,
-                        uid: this.user.uid
+                        uid: this.user ? this.user.uid : null
                     };
-                    database.ref('reports').push(reportData).then(() => {
-                        this.fetchReports();
-                        this.resetForm();
-                    });
+                    if (reportData.discordUsername && reportData.reason) {
+                        database.ref('reports').push(reportData).then(() => {
+                            this.fetchReports();
+                            this.resetForm();
+                        }).catch(error => {
+                            console.error("Error submitting report: ", error);
+                        });
+                    } else {
+                        alert("Please fill in all required fields.");
+                    }
                 },
                 fetchReports() {
                     database.ref('reports').once('value').then(snapshot => {
