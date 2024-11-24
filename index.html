@@ -111,7 +111,9 @@
                             <strong>{{ username }}</strong>
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
-                                    {{ report.reason }} - {{ report.additionalInfo }}
+                                    {{ report.reason }} - {{ report.additionalInfo }} 
+                                    <span class="text-xs text-gray-500">({{ report.status }})</span>
+                                    <button v-if="isAdmin && report.status === 'Pending'" @click="approveReport(report.id)" class="btn btn-sm btn-success ml-2">Approve</button>
                                     <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
                                 </li>
                             </ul>
@@ -164,7 +166,7 @@
                     });
                 },
                 checkAdmin() {
-                    const adminEmail = "admin@admin.com"; // Admin email address
+                    const adminEmail = "admin@admin.com";
                     this.isAdmin = this.user.email === adminEmail;
                 },
                 loginAnonymously() {
@@ -197,7 +199,8 @@
                         discordUsername: this.discordUsername,
                         reason: this.reportReason === 'Other' ? this.otherReason : this.reportReason,
                         additionalInfo: this.additionalInfo,
-                        uid: this.user ? this.user.uid : null
+                        uid: this.user ? this.user.uid : null,
+                        status: 'Pending'
                     };
                     if (reportData.discordUsername && reportData.reason) {
                         database.ref('reports').push(reportData).then(() => {
@@ -226,8 +229,20 @@
                     this.additionalInfo = '';
                 },
                 searchReports() {
-                    this.filteredReports = this.reports.filter(report => report.discordUsername.toLowerCase().includes(this.searchUsername.toLowerCase()));
-                    this.groupReports();
+                    if (this.searchUsername) {
+                        this.filteredReports = this.reports.filter(report => report.discordUsername.toLowerCase().includes(this.searchUsername.toLowerCase()));
+                        this.groupReports();
+                    } else {
+                        this.filteredReports = this.reports;
+                        this.groupReports();
+                    }
+                },
+                approveReport(reportId) {
+                    database.ref('reports/' + reportId).update({ status: 'Approved' }).then(() => {
+                        this.fetchReports();
+                    }).catch(error => {
+                        console.error("Error approving report: ", error);
+                    });
                 },
                 deleteReport(reportId) {
                     database.ref('reports/' + reportId).remove().then(() => {
@@ -238,7 +253,7 @@
                 },
                 groupReports() {
                     this.groupedReports = {};
-                    this.reports.forEach(report => {
+                    this.filteredReports.forEach(report => {
                         if (!this.groupedReports[report.discordUsername]) {
                             this.groupedReports[report.discordUsername] = [];
                         }
