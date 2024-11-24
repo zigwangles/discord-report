@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -107,7 +107,7 @@
                     <h2 class="text-lg font-bold mb-4">Reported Accounts</h2>
                     <div v-if="filteredReports.length === 0" class="text-center">No reports found.</div>
                     <ul>
-                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2" v-if="filteredReports.length > 0">
+                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2">
                             <strong>{{ username }}</strong>
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
@@ -164,7 +164,7 @@
                     });
                 },
                 checkAdmin() {
-                    const adminEmail = "admin@admin.com";
+                    const adminEmail = "admin@admin.com"; // Admin email address
                     this.isAdmin = this.user.email === adminEmail;
                 },
                 loginAnonymously() {
@@ -226,13 +226,8 @@
                     this.additionalInfo = '';
                 },
                 searchReports() {
-                    if (this.searchUsername) {
-                        this.filteredReports = this.reports.filter(report => report.discordUsername.toLowerCase().includes(this.searchUsername.toLowerCase()));
-                        this.groupReports();
-                    } else {
-                        this.filteredReports = this.reports;
-                        this.groupReports();
-                    }
+                    this.filteredReports = this.reports.filter(report => report.discordUsername.toLowerCase().includes(this.searchUsername.toLowerCase()));
+                    this.groupReports();
                 },
                 deleteReport(reportId) {
                     database.ref('reports/' + reportId).remove().then(() => {
@@ -243,7 +238,7 @@
                 },
                 groupReports() {
                     this.groupedReports = {};
-                    this.filteredReports.forEach(report => {
+                    this.reports.forEach(report => {
                         if (!this.groupedReports[report.discordUsername]) {
                             this.groupedReports[report.discordUsername] = [];
                         }
