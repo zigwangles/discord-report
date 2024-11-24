@@ -106,14 +106,26 @@
                     </div>
                     <h2 class="text-lg font-bold mb-4">Reported Accounts</h2>
                     <div v-if="filteredReports.length === 0" class="text-center">No reports found.</div>
+                    <h3 class="text-lg font-bold">Pending Reports</h3>
                     <ul>
-                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2">
+                        <li v-for="(reportGroup, username) in groupedPendingReports" :key="username" class="border-b py-2">
                             <strong>{{ username }}</strong>
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
                                     {{ report.reason }} - {{ report.additionalInfo }} 
-                                    <span class="text-xs text-gray-500">({{ report.status }})</span>
-                                    <button v-if="isAdmin && report.status === 'Pending'" @click="approveReport(report.id)" class="btn btn-sm btn-success ml-2">Approve</button>
+                                    <button v-if="isAdmin" @click="approveReport(report.id)" class="btn btn-sm btn-success ml-2">Approve</button>
+                                    <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h3 class="text-lg font-bold mt-4">Approved Reports</h3>
+                    <ul>
+                        <li v-for="(reportGroup, username) in groupedApprovedReports" :key="username" class="border-b py-2">
+                            <strong>{{ username }}</strong>
+                            <ul>
+                                <li v-for="report in reportGroup" :key="report.id">
+                                    {{ report.reason }} - {{ report.additionalInfo }}
                                     <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
                                 </li>
                             </ul>
@@ -154,7 +166,9 @@
                 reports: [],
                 filteredReports: [],
                 isGuest: false,
-                groupedReports: {}
+                groupedReports: {},
+                groupedPendingReports: {},
+                groupedApprovedReports: {}
             },
             methods: {
                 login() {
@@ -167,7 +181,7 @@
                 },
                 checkAdmin() {
                     const adminEmail = "admin@admin.com";
-                    this.isAdmin = this.user.email === adminEmail;
+                    this.isAdmin = this.user ? (this.user.email === adminEmail) : false;
                 },
                 loginAnonymously() {
                     auth.signInAnonymously().then(() => {
@@ -252,12 +266,20 @@
                     });
                 },
                 groupReports() {
-                    this.groupedReports = {};
+                    this.groupedPendingReports = {};
+                    this.groupedApprovedReports = {};
                     this.filteredReports.forEach(report => {
-                        if (!this.groupedReports[report.discordUsername]) {
-                            this.groupedReports[report.discordUsername] = [];
+                        if (report.status === 'Pending') {
+                            if (!this.groupedPendingReports[report.discordUsername]) {
+                                this.groupedPendingReports[report.discordUsername] = [];
+                            }
+                            this.groupedPendingReports[report.discordUsername].push(report);
+                        } else if (report.status === 'Approved') {
+                            if (!this.groupedApprovedReports[report.discordUsername]) {
+                                this.groupedApprovedReports[report.discordUsername] = [];
+                            }
+                            this.groupedApprovedReports[report.discordUsername].push(report);
                         }
-                        this.groupedReports[report.discordUsername].push(report);
                     });
                 }
             },
