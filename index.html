@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -107,12 +107,11 @@
                     <h2 class="text-lg font-bold mb-4">Reported Accounts</h2>
                     <div v-if="filteredReports.length === 0" class="text-center">No reports found.</div>
                     <ul>
-                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2">
+                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2" v-if="filteredReports.length > 0">
                             <strong>{{ username }}</strong>
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
                                     {{ report.reason }} - {{ report.additionalInfo }}
-                                    <span v-if="report.admin" class="text-blue-300">(Admin)</span>
                                     <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
                                 </li>
                             </ul>
@@ -165,8 +164,8 @@
                     });
                 },
                 checkAdmin() {
-                    const adminEmail = "admin@admin.com";
-                    this.isAdmin = this.user ? (this.user.email === adminEmail) : false;
+                    const adminEmail = "admin@example.com";
+                    this.isAdmin = this.user.email === adminEmail;
                 },
                 loginAnonymously() {
                     auth.signInAnonymously().then(() => {
@@ -198,8 +197,7 @@
                         discordUsername: this.discordUsername,
                         reason: this.reportReason === 'Other' ? this.otherReason : this.reportReason,
                         additionalInfo: this.additionalInfo,
-                        uid: this.user ? this.user.uid : null,
-                        admin: this.isAdmin
+                        uid: this.user ? this.user.uid : null
                     };
                     if (reportData.discordUsername && reportData.reason) {
                         database.ref('reports').push(reportData).then(() => {
