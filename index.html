@@ -106,26 +106,13 @@
                     </div>
                     <h2 class="text-lg font-bold mb-4">Reported Accounts</h2>
                     <div v-if="filteredReports.length === 0" class="text-center">No reports found.</div>
-                    <h3 class="text-lg font-bold">Pending Reports</h3>
                     <ul>
-                        <li v-for="(reportGroup, username) in groupedPendingReports" :key="username" class="border-b py-2">
-                            <strong>{{ username }}</strong>
-                            <ul>
-                                <li v-for="report in reportGroup" :key="report.id">
-                                    {{ report.reason }} - {{ report.additionalInfo }} 
-                                    <button v-if="isAdmin" @click="approveReport(report.id)" class="btn btn-sm btn-success ml-2">Approve</button>
-                                    <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <h3 class="text-lg font-bold mt-4">Approved Reports</h3>
-                    <ul>
-                        <li v-for="(reportGroup, username) in groupedApprovedReports" :key="username" class="border-b py-2">
+                        <li v-for="(reportGroup, username) in groupedReports" :key="username" class="border-b py-2">
                             <strong>{{ username }}</strong>
                             <ul>
                                 <li v-for="report in reportGroup" :key="report.id">
                                     {{ report.reason }} - {{ report.additionalInfo }}
+                                    <span v-if="report.admin" class="text-blue-300">(Admin)</span>
                                     <button v-if="isAdmin" @click="deleteReport(report.id)" class="btn btn-sm btn-danger ml-2">Delete</button>
                                 </li>
                             </ul>
@@ -166,9 +153,7 @@
                 reports: [],
                 filteredReports: [],
                 isGuest: false,
-                groupedReports: {},
-                groupedPendingReports: {},
-                groupedApprovedReports: {}
+                groupedReports: {}
             },
             methods: {
                 login() {
@@ -214,7 +199,7 @@
                         reason: this.reportReason === 'Other' ? this.otherReason : this.reportReason,
                         additionalInfo: this.additionalInfo,
                         uid: this.user ? this.user.uid : null,
-                        status: 'Pending'
+                        admin: this.isAdmin
                     };
                     if (reportData.discordUsername && reportData.reason) {
                         database.ref('reports').push(reportData).then(() => {
@@ -251,13 +236,6 @@
                         this.groupReports();
                     }
                 },
-                approveReport(reportId) {
-                    database.ref('reports/' + reportId).update({ status: 'Approved' }).then(() => {
-                        this.fetchReports();
-                    }).catch(error => {
-                        console.error("Error approving report: ", error);
-                    });
-                },
                 deleteReport(reportId) {
                     database.ref('reports/' + reportId).remove().then(() => {
                         this.fetchReports();
@@ -266,20 +244,12 @@
                     });
                 },
                 groupReports() {
-                    this.groupedPendingReports = {};
-                    this.groupedApprovedReports = {};
+                    this.groupedReports = {};
                     this.filteredReports.forEach(report => {
-                        if (report.status === 'Pending') {
-                            if (!this.groupedPendingReports[report.discordUsername]) {
-                                this.groupedPendingReports[report.discordUsername] = [];
-                            }
-                            this.groupedPendingReports[report.discordUsername].push(report);
-                        } else if (report.status === 'Approved') {
-                            if (!this.groupedApprovedReports[report.discordUsername]) {
-                                this.groupedApprovedReports[report.discordUsername] = [];
-                            }
-                            this.groupedApprovedReports[report.discordUsername].push(report);
+                        if (!this.groupedReports[report.discordUsername]) {
+                            this.groupedReports[report.discordUsername] = [];
                         }
+                        this.groupedReports[report.discordUsername].push(report);
                     });
                 }
             },
